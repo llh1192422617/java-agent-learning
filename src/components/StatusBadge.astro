@@ -1,0 +1,8 @@
+---
+import { statusLabels } from "../lib/content";
+
+type Status = keyof typeof statusLabels;
+const { status } = Astro.props as { status: Status };
+---
+
+<span class={`status-badge status-badge--${status}`}>{statusLabels[status]}</span>

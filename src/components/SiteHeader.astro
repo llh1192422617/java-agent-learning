@@ -1,0 +1,21 @@
+---
+const { currentPath = Astro.url.pathname } = Astro.props;
+---
+
+<header class="site-header" data-pagefind-ignore>
+  <div class="site-header__inner">
+    <a class="brand" href="/" aria-label="Java 全栈与 Agent 学习站首页">
+      <span class="brand__mark" aria-hidden="true">J</span>
+      <span>
+        <strong>Java Agent 学习站</strong>
+        <small>从前端到全栈与 Agent 工程</small>
+      </span>
+    </a>
+    <nav class="main-nav" aria-label="主导航">
+      <a href="/" aria-current={currentPath === "/" ? "page" : undefined}>学习目录</a>
+      <a href="/search/" aria-current={currentPath === "/search/" ? "page" : undefined}>
+        <span aria-hidden="true">⌕</span> 全文搜索
+      </a>
+    </nav>
+  </div>
+</header>

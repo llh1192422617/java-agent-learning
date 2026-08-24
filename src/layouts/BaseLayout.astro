@@ -1,0 +1,44 @@
+---
+import SiteHeader from "../components/SiteHeader.astro";
+import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+}
+
+const {
+  title = "Java 全栈与 Agent 学习站",
+  description = "从前端出发，系统学习 Java 全栈、Agent 工程与生产级项目实践。",
+  image,
+} = Astro.props;
+const pageTitle = title === "Java 全栈与 Agent 学习站" ? title : `${title}｜Java Agent 学习站`;
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin);
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#f6f8fa" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    {image && <meta property="og:image" content={image} />}
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>{pageTitle}</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">跳到正文</a>
+    <SiteHeader />
+    <slot />
+    <footer class="site-footer" data-pagefind-ignore>
+      <p>持续学习，持续交付。内容由 Markdown 驱动。</p>
+    </footer>
+  </body>
+</html>

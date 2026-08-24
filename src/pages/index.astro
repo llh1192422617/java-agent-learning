@@ -1,0 +1,87 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import StatusBadge from "../components/StatusBadge.astro";
+import { dayUrl, formatDate, sortDays, statusLabels } from "../lib/content";
+
+const days = sortDays(await getCollection("days"));
+const counts = Object.fromEntries(
+  Object.keys(statusLabels).map((status) => [status, days.filter((entry) => entry.data.status === status).length]),
+) as Record<keyof typeof statusLabels, number>;
+const current = [...days].reverse().find((entry) => entry.data.status === "in-progress") ?? days.at(-1);
+const allTags = [...new Set(days.flatMap((entry) => entry.data.tags))].sort((a, b) => a.localeCompare(b, "zh-CN"));
+---
+
+<BaseLayout>
+  <main id="main-content">
+    <section class="hero">
+      <div class="hero__content">
+        <p class="eyebrow">LEARNING IN PUBLIC</p>
+        <h1>从前端出发，构建能上线的<br /><span>Java 全栈与 Agent 应用</span></h1>
+        <p class="hero__description">
+          这里记录每日学习、代码实验和工程思考。每篇内容既是学习笔记，也是可以独立分享和深入答疑的完整讲义。
+        </p>
+        <div class="hero__actions">
+          {current && <a class="button button--primary" href={dayUrl(current.data.day)}>继续学习 Day {current.data.day}</a>}
+          <a class="button button--secondary" href="/search/">搜索全部内容</a>
+        </div>
+      </div>
+      <aside class="progress-card" aria-label="学习进度">
+        <p class="progress-card__label">当前进度</p>
+        <strong>{counts.completed}<small> / {days.length}</small></strong>
+        <div class="progress-bar" aria-hidden="true">
+          <span style={`width: ${days.length ? Math.round((counts.completed / days.length) * 100) : 0}%`}></span>
+        </div>
+        <dl>
+          <div><dt>已发布</dt><dd>{days.length}</dd></div>
+          <div><dt>学习中</dt><dd>{counts["in-progress"]}</dd></div>
+          <div><dt>已完成</dt><dd>{counts.completed}</dd></div>
+        </dl>
+      </aside>
+    </section>
+
+    <section class="content-section" aria-labelledby="learning-list">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">DAILY NOTES</p>
+          <h2 id="learning-list">每日学习目录</h2>
+        </div>
+        <p>共 {days.length} 篇，按学习顺序排列</p>
+      </div>
+
+      {days.length > 0 ? (
+        <div class="day-grid">
+          {days.map((entry) => (
+            <article class="day-card">
+              <div class="day-card__topline">
+                <span class="day-number">DAY {String(entry.data.day).padStart(2, "0")}</span>
+                <StatusBadge status={entry.data.status} />
+              </div>
+              <h3><a href={dayUrl(entry.data.day)}>{entry.data.title}</a></h3>
+              <p>{entry.data.summary}</p>
+              <div class="day-card__meta">
+                <time datetime={entry.data.date.toISOString()}>{formatDate(entry.data.date)}</time>
+                {entry.data.duration && <span>{entry.data.duration}</span>}
+              </div>
+              {entry.data.tags.length > 0 && (
+                <ul class="tag-list" aria-label="标签">
+                  {entry.data.tags.map((tag) => <li>{tag}</li>)}
+                </ul>
+              )}
+              <a class="card-link" href={dayUrl(entry.data.day)} aria-label={`阅读 Day ${entry.data.day}：${entry.data.title}`}>阅读讲义 <span>→</span></a>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div class="empty-state">第一篇学习文档正在整理中。</div>
+      )}
+    </section>
+
+    {allTags.length > 0 && (
+      <section class="tag-cloud content-section" aria-labelledby="tag-title">
+        <h2 id="tag-title">知识标签</h2>
+        <ul>{allTags.map((tag) => <li>{tag}</li>)}</ul>
+      </section>
+    )}
+  </main>
+</BaseLayout>

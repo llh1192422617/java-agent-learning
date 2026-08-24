@@ -1,0 +1,102 @@
+---
+import { getCollection, render, type CollectionEntry } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import StatusBadge from "../../components/StatusBadge.astro";
+import TableOfContents from "../../components/TableOfContents.astro";
+import { dayUrl, formatDate, sortDays } from "../../lib/content";
+import "../../styles/markdown.css";
+
+export async function getStaticPaths() {
+  const entries = await getCollection("days");
+  return entries.map((entry) => ({
+    params: { slug: `day-${String(entry.data.day).padStart(2, "0")}` },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props as { entry: CollectionEntry<"days"> };
+const allDays = sortDays(await getCollection("days"));
+const index = allDays.findIndex((item) => item.data.day === entry.data.day);
+const previous = index > 0 ? allDays[index - 1] : undefined;
+const next = index < allDays.length - 1 ? allDays[index + 1] : undefined;
+const { Content, headings } = await render(entry);
+---
+
+<BaseLayout title={`Day ${entry.data.day}：${entry.data.title}`} description={entry.data.summary}>
+  <main id="main-content" class="lesson-shell">
+    <aside class="lesson-sidebar">
+      <a class="back-link" href="/">← 返回学习目录</a>
+      <TableOfContents headings={headings} />
+    </aside>
+
+    <article
+      class="lesson markdown-body"
+      data-pagefind-body
+      data-pagefind-meta={`day:${entry.data.day}`}
+      data-pagefind-filter={`status:${entry.data.status}`}
+    >
+      <header class="lesson-header">
+        <div class="lesson-header__topline">
+          <span class="day-number">DAY {String(entry.data.day).padStart(2, "0")}</span>
+          <StatusBadge status={entry.data.status} />
+        </div>
+        <h1 data-pagefind-meta="title">{entry.data.title}</h1>
+        <p class="lesson-summary">{entry.data.summary}</p>
+        <div class="lesson-meta">
+          <time datetime={entry.data.date.toISOString()}>更新于 {formatDate(entry.data.date)}</time>
+          {entry.data.duration && <span>建议用时 {entry.data.duration}</span>}
+        </div>
+        {entry.data.tags.length > 0 && (
+          <ul class="tag-list" aria-label="标签">
+            {entry.data.tags.map((tag) => <li data-pagefind-filter={`tag:${tag}`}>{tag}</li>)}
+          </ul>
+        )}
+      </header>
+
+      <details class="mobile-toc">
+        <summary>展开本文目录</summary>
+        <TableOfContents headings={headings} />
+      </details>
+
+      <div class="lesson-content">
+        <Content />
+      </div>
+
+      <nav class="lesson-pagination" aria-label="前后文导航" data-pagefind-ignore>
+        {previous ? (
+          <a href={dayUrl(previous.data.day)}>
+            <small>上一篇 · Day {previous.data.day}</small>
+            <strong>{previous.data.title}</strong>
+          </a>
+        ) : <span></span>}
+        {next && (
+          <a class="lesson-pagination__next" href={dayUrl(next.data.day)}>
+            <small>下一篇 · Day {next.data.day}</small>
+            <strong>{next.data.title}</strong>
+          </a>
+        )}
+      </nav>
+    </article>
+  </main>
+</BaseLayout>
+
+<script>
+  const links = [...document.querySelectorAll<HTMLAnchorElement>(".lesson-sidebar .toc a")];
+  const headings = links
+    .map((link) => document.getElementById(decodeURIComponent(link.hash.slice(1))))
+    .filter((heading): heading is HTMLElement => Boolean(heading));
+
+  if (headings.length > 0) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.find((item) => item.isIntersecting);
+        if (!visible) return;
+        links.forEach((link) => link.removeAttribute("aria-current"));
+        const active = links.find((link) => decodeURIComponent(link.hash.slice(1)) === visible.target.id);
+        active?.setAttribute("aria-current", "location");
+      },
+      { rootMargin: "-15% 0px -75%", threshold: 0 },
+    );
+    headings.forEach((heading) => observer.observe(heading));
+  }
+</script>

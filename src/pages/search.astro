@@ -1,0 +1,21 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="全文搜索" description="搜索 Java 全栈与 Agent 学习站的全部讲义与章节。">
+  <main id="main-content" class="search-page">
+    <div class="page-intro">
+      <p class="eyebrow">FULL-TEXT SEARCH</p>
+      <h1>搜索全部学习内容</h1>
+      <p>支持中文与英文关键词，结果可直接定位到讲义中的具体章节。</p>
+    </div>
+    <section class="search-panel" aria-label="全文搜索">
+      <pagefind-config language="zh"></pagefind-config>
+      <pagefind-input></pagefind-input>
+      <pagefind-results></pagefind-results>
+      <noscript>搜索功能需要启用 JavaScript。</noscript>
+    </section>
+  </main>
+  <link href="/pagefind/pagefind-component-ui.css" rel="stylesheet" />
+  <script is:inline src="/pagefind/pagefind-component-ui.js" type="module"></script>
+</BaseLayout>

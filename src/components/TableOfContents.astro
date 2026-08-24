@@ -1,0 +1,17 @@
+---
+import type { MarkdownHeading } from "astro";
+
+const { headings } = Astro.props as { headings: MarkdownHeading[] };
+const visibleHeadings = headings.filter((heading) => heading.depth >= 1 && heading.depth <= 3);
+---
+
+<nav class="toc" aria-label="本文目录" data-pagefind-ignore>
+  <p class="toc__title"><span aria-hidden="true">▤</span> 本文目录</p>
+  <ol>
+    {visibleHeadings.map((heading) => (
+      <li class={`toc__level-${heading.depth}`}>
+        <a href={`#${heading.slug}`}>{heading.text}</a>
+      </li>
+    ))}
+  </ol>
+</nav>
