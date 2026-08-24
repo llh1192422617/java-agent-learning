@@ -1,4 +1,5 @@
 import { defineConfig } from "astro/config";
+import { unified } from "@astrojs/markdown-remark";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 
 const markdownSchema = {
@@ -16,11 +17,13 @@ export default defineConfig({
   site: "https://java-agent-learning.vercel.app",
   output: "static",
   markdown: {
+    processor: unified({
+      rehypePlugins: [[rehypeSanitize, markdownSchema]],
+    }),
     syntaxHighlight: "shiki",
     shikiConfig: {
       theme: "github-light",
       wrap: true,
     },
-    rehypePlugins: [[rehypeSanitize, markdownSchema]],
   },
 });
