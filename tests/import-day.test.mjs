@@ -123,6 +123,15 @@ test("生成站点内容时清理 Obsidian Markdown 行尾空白", async () => {
   assert.match(result.body, /自动摘要。\n下一行。/);
 });
 
+test("普通嵌套列表输出的双右括号不会被误判为 Obsidian 链接", async () => {
+  const { path } = await fixture(
+    "Day3.md",
+    "# Day 3：输出\n\n这一段足够长，可以作为自动摘要。\n\nJava 用户: [1:Alice[Java, TypeScript]]\n",
+  );
+  const result = await normalizeDayDocument(path);
+  assert.match(result.body, /Alice\[Java, TypeScript\]\]/);
+});
+
 test("写入时保护已有 Day，--replace 才允许更新", async () => {
   const projectRoot = await mkdtemp(join(tmpdir(), "learning-portal-project-"));
   await mkdir(join(projectRoot, "src/content/days"), { recursive: true });

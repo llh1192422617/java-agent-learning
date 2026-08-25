@@ -183,7 +183,9 @@ export async function normalizeDayDocument(sourcePath, options = {}) {
   });
 
   body = body.replace(/[ \t]+$/gm, "");
-  if (body.includes("[[") || body.includes("]]")) throw new Error("正文仍包含未解析的 Obsidian 链接，请先修正后再发布");
+  if (/!?\[\[[^\]\n]+\]\]/.test(body)) {
+    throw new Error("正文仍包含未解析的 Obsidian 链接，请先修正后再发布");
+  }
 
   const metadata = {
     day,
