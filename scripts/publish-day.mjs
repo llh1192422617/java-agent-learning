@@ -63,7 +63,11 @@ async function main() {
 
     const relativeContent = `src/content/days/${result.slug}.md`;
     const relativeAssets = `public/content-assets/${result.slug}`;
-    run("git", ["add", "-A", "--", relativeContent, relativeAssets]);
+    const assetPathExists = await pathExists(join(projectRoot, relativeAssets));
+    const assetPathTracked = Boolean(git("ls-files", "--", relativeAssets));
+    const pathsToStage = [relativeContent];
+    if (assetPathExists || assetPathTracked) pathsToStage.push(relativeAssets);
+    run("git", ["add", "-A", "--", ...pathsToStage]);
     run("git", ["commit", "-m", `content: publish Day ${result.day}`]);
 
     try {

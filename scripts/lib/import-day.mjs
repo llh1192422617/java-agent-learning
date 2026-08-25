@@ -182,6 +182,7 @@ export async function normalizeDayDocument(sourcePath, options = {}) {
     return `[${label}](/days/${formatDaySlug(linkedDay)}/${hash})`;
   });
 
+  body = body.replace(/[ \t]+$/gm, "");
   if (body.includes("[[") || body.includes("]]")) throw new Error("正文仍包含未解析的 Obsidian 链接，请先修正后再发布");
 
   const metadata = {

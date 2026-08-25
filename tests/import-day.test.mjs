@@ -113,6 +113,16 @@ test("发布日讲义时移除只存在于 Obsidian 的配套逐字稿链接", a
   assert.match(result.body, /这一段足够长/);
 });
 
+test("生成站点内容时清理 Obsidian Markdown 行尾空白", async () => {
+  const { path } = await fixture(
+    "Day2.md",
+    "# Day 2：空白规范化\n\n这一段足够长，可以作为自动摘要。  \n下一行。\t\n",
+  );
+  const result = await normalizeDayDocument(path);
+  assert.doesNotMatch(result.body, /[ \t]+$/m);
+  assert.match(result.body, /自动摘要。\n下一行。/);
+});
+
 test("写入时保护已有 Day，--replace 才允许更新", async () => {
   const projectRoot = await mkdtemp(join(tmpdir(), "learning-portal-project-"));
   await mkdir(join(projectRoot, "src/content/days"), { recursive: true });
