@@ -88,6 +88,31 @@ test("转换指向 Day 的 Obsidian 链接并拒绝未知链接", async () => {
   await assert.rejects(() => normalizeDayDocument(invalid.path), /未解析的 Obsidian 内部链接/);
 });
 
+test("转换当前页与其他 Day 的 Obsidian 标题锚点", async () => {
+  const { path } = await fixture("Day8.md", `# Day 8：章节链接
+
+这一段足够长，可以作为自动摘要。
+
+- [[#2. 泛型分页模型 \`Page<T>\`]]
+- [[Day 3#Q01. 泛型解决什么问题？|查看泛型面试题]]
+`);
+  const result = await normalizeDayDocument(path);
+  assert.match(result.body, /\[2\. 泛型分页模型 \`Page<T>\`\]\(#2-泛型分页模型-paget\)/);
+  assert.match(result.body, /\[查看泛型面试题\]\(\/days\/day-03\/#q01-泛型解决什么问题\)/);
+});
+
+test("发布日讲义时移除只存在于 Obsidian 的配套逐字稿链接", async () => {
+  const { path } = await fixture("Day2.md", `# Day 2：分层
+
+> **配套讲稿**：[[Day2-逐字演讲稿]]
+
+这一段足够长，可以作为自动摘要。
+`);
+  const result = await normalizeDayDocument(path);
+  assert.doesNotMatch(result.body, /逐字演讲稿/);
+  assert.match(result.body, /这一段足够长/);
+});
+
 test("写入时保护已有 Day，--replace 才允许更新", async () => {
   const projectRoot = await mkdtemp(join(tmpdir(), "learning-portal-project-"));
   await mkdir(join(projectRoot, "src/content/days"), { recursive: true });

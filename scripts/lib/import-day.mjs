@@ -3,6 +3,7 @@ import { constants as fsConstants } from "node:fs";
 import { basename, dirname, extname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import matter from "gray-matter";
+import GithubSlugger from "github-slugger";
 
 export const VALID_STATUSES = new Set(["planned", "in-progress", "completed"]);
 const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".avif"]);
@@ -97,6 +98,11 @@ function safeDecode(reference) {
   }
 }
 
+function headingHash(heading) {
+  const slugger = new GithubSlugger();
+  return `#${slugger.slug(String(heading).trim())}`;
+}
+
 export async function normalizeDayDocument(sourcePath, options = {}) {
   const absoluteSource = resolve(sourcePath);
   const sourceInfo = await stat(absoluteSource).catch(() => null);
@@ -122,6 +128,10 @@ export async function normalizeDayDocument(sourcePath, options = {}) {
   let body = parsed.content;
   if (headingMatch) body = body.replace(/^#\s+.+(?:\r?\n)+/, "");
   body = body.trimStart();
+  body = body.replace(
+    /^>\s*\*\*配套讲稿\*\*：\s*\[\[[^\]]*逐字演讲稿[^\]]*\]\]\s*\n?/gm,
+    "",
+  );
 
   const slug = formatDaySlug(day);
   const assetSources = new Map();
@@ -150,9 +160,18 @@ export async function normalizeDayDocument(sourcePath, options = {}) {
   });
 
   body = await replaceAsync(body, /(?<!!)\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, async (_all, target, label) => {
-    const linkedDay = inferDay(target);
+    const normalizedTarget = String(target).trim();
+    const hashIndex = normalizedTarget.indexOf("#");
+    const documentReference = hashIndex >= 0 ? normalizedTarget.slice(0, hashIndex).trim() : normalizedTarget;
+    const heading = hashIndex >= 0 ? normalizedTarget.slice(hashIndex + 1).trim() : "";
+    const hash = heading ? headingHash(heading) : "";
+    const linkLabel = String(label ?? heading ?? documentReference).trim();
+
+    if (!documentReference && heading) return `[${linkLabel}](${hash})`;
+
+    const linkedDay = inferDay(documentReference);
     if (!linkedDay) throw new Error(`无法发布未解析的 Obsidian 内部链接：[[${target}]]`);
-    return `[${String(label ?? target).trim()}](/days/${formatDaySlug(linkedDay)}/)`;
+    return `[${linkLabel}](/days/${formatDaySlug(linkedDay)}/${hash})`;
   });
 
   body = body.replace(/(?<!!)\[([^\]]+)\]\(([^)]+\.md(?:#[^)]*)?)\)/gi, (all, label, reference) => {
